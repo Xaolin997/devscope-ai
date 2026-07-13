@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: devscope-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: devscope
+    ports:
+      - "5432:5432"
+    volumes:
+      - devscope_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  devscope_postgres_data:
