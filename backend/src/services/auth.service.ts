@@ -10,6 +10,11 @@ type DadosCadastro = {
   senha: string;
 };
 
+type DadosLogin = {
+  email: string;
+  senha: string;
+};
+
 export async function cadastrarUsuario(dados: DadosCadastro) {
   const usuarioExistente = await buscarUsuarioPorEmail(dados.email);
 
@@ -24,4 +29,27 @@ export async function cadastrarUsuario(dados: DadosCadastro) {
     email: dados.email,
     senhaHash
   });
+}
+
+export async function autenticarUsuario(dados: DadosLogin) {
+  const usuario = await buscarUsuarioPorEmail(dados.email);
+
+  if (!usuario) {
+    throw new Error("CREDENCIAIS_INVALIDAS");
+  }
+
+  const senhaCorreta = await bcrypt.compare(
+    dados.senha,
+    usuario.senhaHash
+  );
+
+  if (!senhaCorreta) {
+    throw new Error("CREDENCIAIS_INVALIDAS");
+  }
+
+  return {
+    id: usuario.id,
+    nome: usuario.nome,
+    email: usuario.email
+  };
 }
