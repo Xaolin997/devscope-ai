@@ -1,6 +1,7 @@
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 import jwt from "@fastify/jwt";
+import rateLimit from "@fastify/rate-limit";
 import { authRoutes } from "./routes/auth.routes.js";
 
 export function createApp() {
@@ -25,6 +26,10 @@ export function createApp() {
       status: "ok",
       service: "DevScope API"
     };
+  });
+  app.register(rateLimit, {
+  max: 100,
+  timeWindow: "1 minute"
   });
 
   return app;
