@@ -8,6 +8,14 @@ type DadosNovaEmpresa = {
   usuarioId: string;
 };
 
+function normalizarNome(nome: string) {
+  return nome
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
 export async function criarEmpresa(dados: DadosNovaEmpresa) {
   const nome = dados.nome.trim();
 
@@ -15,7 +23,13 @@ export async function criarEmpresa(dados: DadosNovaEmpresa) {
     throw new Error("NOME_EMPRESA_INVALIDO");
   }
 
-  return criarEmpresaComAdministrador(nome, dados.usuarioId);
+  const nomeNormalizado = normalizarNome(nome);
+
+  return criarEmpresaComAdministrador({
+    nome,
+    nomeNormalizado,
+    usuarioId: dados.usuarioId
+  });
 }
 
 export async function buscarEmpresasDoUsuario(usuarioId: string) {

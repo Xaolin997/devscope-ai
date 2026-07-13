@@ -19,13 +19,17 @@ model Usuario {
 }
 
 model Empresa {
-  id           String   @id @default(uuid())
-  nome         String
-  criadoEm     DateTime @default(now())
-  atualizadoEm DateTime @updatedAt
+  id             String          @id @default(uuid())
+  nome           String
+  nomeNormalizado String
+  criadoPorId    String
+  criadoEm       DateTime        @default(now())
+  atualizadoEm   DateTime        @updatedAt
 
-  membros  MembroEmpresa[]
-  projetos Projeto[]
+  membros        MembroEmpresa[]
+  projetos       Projeto[]
+
+  @@unique([criadoPorId, nomeNormalizado])
 }
 
 model MembroEmpresa {

@@ -1,15 +1,22 @@
 import { prisma } from "../config/prisma.js";
 
+type DadosCriacaoEmpresa = {
+  nome: string;
+  nomeNormalizado: string;
+  usuarioId: string;
+};
+
 export async function criarEmpresaComAdministrador(
-  nome: string,
-  usuarioId: string
+  dados: DadosCriacaoEmpresa
 ) {
   return prisma.empresa.create({
     data: {
-      nome,
+      nome: dados.nome,
+      nomeNormalizado: dados.nomeNormalizado,
+      criadoPorId: dados.usuarioId,
       membros: {
         create: {
-          usuarioId,
+          usuarioId: dados.usuarioId,
           cargo: "ADMIN"
         }
       }
@@ -39,9 +46,9 @@ export async function listarEmpresasDoUsuario(usuarioId: string) {
     where: {
       membros: {
         some: {
-          usuarioId
-        }
-      }
+          usuarioId,
+        },
+      },
     },
     select: {
       id: true,
@@ -50,21 +57,21 @@ export async function listarEmpresasDoUsuario(usuarioId: string) {
       atualizadoEm: true,
       membros: {
         where: {
-          usuarioId
+          usuarioId,
         },
         select: {
-          cargo: true
-        }
+          cargo: true,
+        },
       },
       _count: {
         select: {
           membros: true,
-          projetos: true
-        }
-      }
+          projetos: true,
+        },
+      },
     },
     orderBy: {
-      criadoEm: "desc"
-    }
+      criadoEm: "desc",
+    },
   });
 }
