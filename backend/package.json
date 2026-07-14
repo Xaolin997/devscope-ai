@@ -1,6 +1,7 @@
 {
-  "name": "backend",
+  "name": "@devscope/backend",
   "version": "1.0.0",
+  "private": true,
   "description": "",
   "main": "index.js",
   "keywords": [],
@@ -11,11 +12,16 @@
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev",
-    "prisma:studio": "prisma studio"
+    "typecheck": "tsc --noEmit",
+    "test": "dotenv -e .env.test -- vitest run",
+    "test:watch": "dotenv -e .env.test -- vitest",
+    "test:db:prepare": "dotenv -e .env.test -- prisma migrate deploy",
+    "test:coverage": "vitest run --coverage",
+    "verify": "pnpm prisma:validate && pnpm typecheck && pnpm test && pnpm build",
+    "prisma:validate": "prisma validate"
   },
   "dependencies": {
+    "@devscope/shared": "workspace:*",
     "@fastify/cors": "^11.3.0",
     "@fastify/jwt": "^10.2.0",
     "@fastify/rate-limit": "^11.1.0",
@@ -32,7 +38,9 @@
     "@types/bcrypt": "^6.0.0",
     "@types/node": "^26.1.1",
     "@types/pg": "^8.20.0",
+    "dotenv-cli": "^11.0.0",
     "tsx": "^4.23.0",
-    "typescript": "5.9"
+    "typescript": "5.9",
+    "vitest": "^4.1.10"
   }
 }

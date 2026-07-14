@@ -1,0 +1,47 @@
+# Dependências
+node_modules/
+.pnpm-store/
+
+# Variáveis de ambiente
+.env
+.env.*
+!.env.example
+!.env.test.example
+
+# Builds
+dist/
+build/
+.next/
+out/
+coverage/
+
+# Cache
+.turbo/
+*.tsbuildinfo
+.eslintcache
+
+# Prisma gerado
+backend/src/generated/
+backend/generated/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Sistema e editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Temporários
+tmp/
+temp/
+.cache/
+
+# Docker local
+infra/postgres/backup/*
+!infra/postgres/backup/.gitkeep

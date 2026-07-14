@@ -2,7 +2,6 @@ import "dotenv/config";
 import { createApp } from "./app.js";
 
 const app = createApp();
-
 const port = Number(process.env.PORT) || 3333;
 
 try {
@@ -10,9 +9,7 @@ try {
     port,
     host: "0.0.0.0"
   });
-
-  console.log(`Servidor rodando em http://localhost:${port}`);
-} catch (error) {
-  app.log.error(error);
+} catch (erro) {
+  app.log.error(erro);
   process.exit(1);
 }
