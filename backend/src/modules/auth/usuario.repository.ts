@@ -1,8 +1,8 @@
-import { prisma } from "../config/prisma.js";
+import { prisma } from "../../config/prisma.js";
 
 export async function buscarUsuarioPorEmail(email: string) {
   return prisma.usuario.findUnique({
-    where: { email }
+    where: { email },
   });
 }
 
@@ -17,7 +17,7 @@ export async function criarUsuario(dados: {
       id: true,
       nome: true,
       email: true,
-      criadoEm: true
-    }
+      criadoEm: true,
+    },
   });
 }

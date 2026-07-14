@@ -1,8 +1,5 @@
 import bcrypt from "bcrypt";
-import {
-  buscarUsuarioPorEmail,
-  criarUsuario
-} from "../repositories/usuario.repository.js";
+import { buscarUsuarioPorEmail, criarUsuario } from "./usuario.repository.js";
 
 type DadosCadastro = {
   nome: string;
@@ -27,7 +24,7 @@ export async function cadastrarUsuario(dados: DadosCadastro) {
   return criarUsuario({
     nome: dados.nome,
     email: dados.email,
-    senhaHash
+    senhaHash,
   });
 }
 
@@ -38,10 +35,7 @@ export async function autenticarUsuario(dados: DadosLogin) {
     throw new Error("CREDENCIAIS_INVALIDAS");
   }
 
-  const senhaCorreta = await bcrypt.compare(
-    dados.senha,
-    usuario.senhaHash
-  );
+  const senhaCorreta = await bcrypt.compare(dados.senha, usuario.senhaHash);
 
   if (!senhaCorreta) {
     throw new Error("CREDENCIAIS_INVALIDAS");
@@ -50,6 +44,6 @@ export async function autenticarUsuario(dados: DadosLogin) {
   return {
     id: usuario.id,
     nome: usuario.nome,
-    email: usuario.email
+    email: usuario.email,
   };
 }

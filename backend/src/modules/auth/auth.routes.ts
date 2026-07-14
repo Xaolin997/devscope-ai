@@ -1,9 +1,6 @@
 import type { FastifyInstance } from "fastify";
-import {
-  cadastroController,
-  loginController
-} from "../controllers/auth.controller.js";
-import { verificarAutenticacao } from "../middlewares/autenticacao.js";
+import { cadastroController, loginController } from "./auth.controller.js";
+import { verificarAutenticacao } from "../../middlewares/autenticacao.js";
 
 export async function authRoutes(app: FastifyInstance) {
   app.post("/cadastro", cadastroController);
@@ -12,13 +9,13 @@ export async function authRoutes(app: FastifyInstance) {
   app.get(
     "/perfil",
     {
-      preHandler: verificarAutenticacao
+      preHandler: verificarAutenticacao,
     },
-    async request => {
+    async (request) => {
       return {
         usuarioId: request.user.sub,
-        email: request.user.email
+        email: request.user.email,
       };
-    }
+    },
   );
 }

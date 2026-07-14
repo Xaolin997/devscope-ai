@@ -5,7 +5,7 @@ import {
   criarEmpresaComAdministrador,
   excluirEmpresa,
   listarEmpresasDoUsuario,
-} from "../repositories/empresa.repository.js";
+} from "./empresa.repository.js";
 
 type DadosNovaEmpresa = {
   nome: string;

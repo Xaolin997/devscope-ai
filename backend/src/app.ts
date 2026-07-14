@@ -2,8 +2,8 @@ import Fastify from "fastify";
 import cors from "@fastify/cors";
 import jwt from "@fastify/jwt";
 import rateLimit from "@fastify/rate-limit";
-import { authRoutes } from "./routes/auth.routes.js";
-import { empresaRoutes } from "./routes/empresa.routes.js";
+import { authRoutes } from "./modules/auth/auth.routes.js";
+import { empresaRoutes } from "./modules/empresas/empresa.routes.js";
 
 export function createApp() {
   const app = Fastify({

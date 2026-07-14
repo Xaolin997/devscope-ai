@@ -1,16 +1,14 @@
 import type { FastifyReply, FastifyRequest } from "fastify";
-
 import { z } from "zod";
-
-import { Prisma } from "../generated/prisma/client.js";
-
 import {
   buscarEmpresaDoUsuario,
   buscarEmpresasDoUsuario,
   criarEmpresa,
   editarEmpresa,
   removerEmpresa,
-} from "../services/empresa.service.js";
+} from "./empresa.service.js";
+
+import { Prisma } from "../../generated/prisma/client.js";
 
 const empresaParamsSchema = z.object({
   id: z.string().uuid("ID da empresa inválido"),

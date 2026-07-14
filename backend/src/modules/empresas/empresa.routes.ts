@@ -1,14 +1,13 @@
 import type { FastifyInstance } from "fastify";
-
 import {
   atualizarEmpresaController,
   buscarEmpresaController,
   criarEmpresaController,
   excluirEmpresaController,
   listarEmpresasController,
-} from "../controllers/empresa.controller.js";
+} from "./empresa.controller.js";
 
-import { verificarAutenticacao } from "../middlewares/autenticacao.js";
+import { verificarAutenticacao } from "../../middlewares/autenticacao.js";
 
 export async function empresaRoutes(app: FastifyInstance) {
   app.addHook("preHandler", verificarAutenticacao);
