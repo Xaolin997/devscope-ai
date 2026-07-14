@@ -2,77 +2,96 @@
 
 set -e
 
-echo "Criando estrutura por módulos..."
+echo "===================================="
+echo " Organizando estrutura do DevScope "
+echo "===================================="
 
-mkdir -p src/modules/auth
-mkdir -p src/modules/empresas
-mkdir -p src/modules/projetos
-mkdir -p src/modules/usuarios
+echo
+echo "Criando estrutura do backend..."
+
 mkdir -p src/config
+mkdir -p src/generated
 mkdir -p src/middlewares
+mkdir -p src/plugins
 mkdir -p src/types
 mkdir -p src/utils
 
-mover_se_existir() {
-  origem="$1"
-  destino="$2"
+mkdir -p src/modules/auth
+mkdir -p src/modules/usuarios
+mkdir -p src/modules/empresas
+mkdir -p src/modules/projetos
+mkdir -p src/modules/sprints
+mkdir -p src/modules/tarefas
+mkdir -p src/modules/comentarios
+mkdir -p src/modules/github
+mkdir -p src/modules/dashboard
+mkdir -p src/modules/notificacoes
+mkdir -p src/modules/ai
 
-  if [ -f "$origem" ]; then
-    echo "Movendo $origem -> $destino"
-    mv "$origem" "$destino"
-  else
-    echo "Ignorado: $origem não existe"
-  fi
-}
-
-mover_se_existir \
-  "src/controllers/auth.controller.ts" \
-  "src/modules/auth/auth.controller.ts"
-
-mover_se_existir \
-  "src/services/auth.service.ts" \
-  "src/modules/auth/auth.service.ts"
-
-mover_se_existir \
-  "src/routes/auth.routes.ts" \
-  "src/modules/auth/auth.routes.ts"
-
-mover_se_existir \
-  "src/repositories/usuario.repository.ts" \
-  "src/modules/auth/usuario.repository.ts"
-
-mover_se_existir \
-  "src/controllers/empresa.controller.ts" \
-  "src/modules/empresas/empresa.controller.ts"
-
-mover_se_existir \
-  "src/services/empresa.service.ts" \
-  "src/modules/empresas/empresa.service.ts"
-
-mover_se_existir \
-  "src/routes/empresa.routes.ts" \
-  "src/modules/empresas/empresa.routes.ts"
-
-mover_se_existir \
-  "src/repositories/empresa.repository.ts" \
-  "src/modules/empresas/empresa.repository.ts"
-
-mover_se_existir \
-  "src/routes/projeto.routes.ts" \
-  "src/modules/projetos/projeto.routes.ts"
+mkdir -p tests
+mkdir -p scripts
 
 echo
-echo "Removendo apenas pastas vazias antigas..."
+echo "Criando estrutura do frontend..."
 
-rmdir src/controllers 2>/dev/null || true
-rmdir src/services 2>/dev/null || true
-rmdir src/routes 2>/dev/null || true
-rmdir src/repositories 2>/dev/null || true
-
-echo
-echo "Estrutura final:"
-find src -maxdepth 4 -type f | sort
+mkdir -p ../frontend/features/auth
+mkdir -p ../frontend/features/dashboard
+mkdir -p ../frontend/features/empresa
+mkdir -p ../frontend/features/projeto
+mkdir -p ../frontend/features/tarefa
+mkdir -p ../frontend/features/sprint
 
 echo
-echo "Reorganização concluída."
-echo "Agora será necessário corrigir os caminhos dos imports."
+echo "Criando packages..."
+
+mkdir -p ../packages/shared
+
+mkdir -p ../packages/shared/constants
+mkdir -p ../packages/shared/enums
+mkdir -p ../packages/shared/types
+mkdir -p ../packages/shared/utils
+mkdir -p ../packages/shared/schemas
+
+echo
+echo "Criando documentação..."
+
+mkdir -p ../docs/api
+mkdir -p ../docs/arquitetura
+mkdir -p ../docs/banco
+mkdir -p ../docs/deploy
+mkdir -p ../docs/wireframes
+mkdir -p ../docs/prints
+
+echo
+echo "Criando infraestrutura..."
+
+mkdir -p ../infra/postgres/init
+mkdir -p ../infra/postgres/backup
+
+mkdir -p ../infra/nginx/conf.d
+
+mkdir -p ../infra/scripts
+
+mkdir -p ../.github/workflows
+
+echo
+echo "Criando arquivos caso não existam..."
+
+touch ../ROADMAP.md
+
+touch ../docs/api/README.md
+touch ../docs/arquitetura/README.md
+touch ../docs/banco/README.md
+touch ../docs/deploy/README.md
+
+touch ../packages/shared/README.md
+
+touch ../infra/scripts/README.md
+
+touch tests/.gitkeep
+touch scripts/.gitkeep
+
+echo
+echo "===================================="
+echo " Estrutura criada com sucesso!"
+echo "===================================="
