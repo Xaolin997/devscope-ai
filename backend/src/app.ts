@@ -5,6 +5,7 @@ import rateLimit from "@fastify/rate-limit";
 
 import { authRoutes } from "./modules/auth/auth.routes.js";
 import { empresaRoutes } from "./modules/empresas/empresa.routes.js";
+import { projetoRoutes } from "./modules/projetos/projeto.routes.js";
 
 export function createApp() {
   const app = Fastify({
