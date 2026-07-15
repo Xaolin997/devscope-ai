@@ -9,34 +9,38 @@ import { projetoRoutes } from "./modules/projetos/projeto.routes.js";
 
 export function createApp() {
   const app = Fastify({
-    logger: false
+    logger: false,
   });
 
   app.register(cors, {
-    origin: true
+    origin: true,
   });
 
   app.register(rateLimit, {
     max: 100,
-    timeWindow: "1 minute"
+    timeWindow: "1 minute",
   });
 
   app.register(jwt, {
-    secret: process.env.JWT_SECRET ?? "segredo-de-teste"
+    secret: process.env.JWT_SECRET ?? "segredo-de-teste",
   });
 
   app.register(authRoutes, {
-    prefix: "/auth"
+    prefix: "/auth",
   });
 
   app.register(empresaRoutes, {
-    prefix: "/empresas"
+    prefix: "/empresas",
+  });
+
+  app.register(projetoRoutes, {
+    prefix: "/empresas",
   });
 
   app.get("/health", async () => {
     return {
       status: "ok",
-      service: "DevScope API"
+      service: "DevScope API",
     };
   });
 
