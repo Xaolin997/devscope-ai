@@ -7,29 +7,37 @@ export class RecursoNaoEncontradoError extends AppError {
 }
 
 export class SemPermissaoError extends AppError {
-  constructor() {
-    super(
-      "Você não possui permissão para realizar esta operação",
-      403,
-      "SEM_PERMISSAO",
-    );
+  constructor(
+    mensagem = "Você não possui permissão para realizar esta operação",
+  ) {
+    super(mensagem, 403, "SEM_PERMISSAO");
   }
 }
 
 export class RecursoDuplicadoError extends AppError {
-  constructor(message: string) {
-    super(message, 409, "RECURSO_DUPLICADO");
+  constructor(mensagem: string) {
+    super(mensagem, 409, "RECURSO_DUPLICADO");
   }
 }
 
 export class DadosInvalidosError extends AppError {
-  constructor(message: string, details?: unknown) {
-    super(message, 400, "DADOS_INVALIDOS", details);
+  constructor(mensagem: string, detalhes?: unknown) {
+    super(mensagem, 400, "DADOS_INVALIDOS", detalhes);
   }
 }
 
 export class CredenciaisInvalidasError extends AppError {
   constructor() {
     super("E-mail ou senha inválidos", 401, "CREDENCIAIS_INVALIDAS");
+  }
+}
+
+export class TokenInvalidoError extends AppError {
+  constructor() {
+    super(
+      "Token inválido ou não informado",
+      401,
+      "TOKEN_INVALIDO",
+    );
   }
 }

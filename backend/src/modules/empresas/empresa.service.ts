@@ -1,3 +1,10 @@
+import { Prisma } from "../../generated/prisma/client.js";
+import {
+  RecursoDuplicadoError,
+  RecursoNaoEncontradoError,
+  SemPermissaoError,
+} from "../../errors/domain-errors.js";
+import { normalizarNome } from "../../helpers/normalizar-nome.js";
 import {
   atualizarEmpresa,
   buscarEmpresaPorId,
@@ -18,38 +25,54 @@ type DadosAtualizacaoEmpresa = {
   nome: string;
 };
 
-function normalizarNome(nome: string) {
-  return nome
-    .trim()
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
-}
-
-async function verificarAdministrador(empresaId: string, usuarioId: string) {
-  const membro = await buscarMembroDaEmpresa(empresaId, usuarioId);
+async function exigirAdministrador(
+  empresaId: string,
+  usuarioId: string,
+) {
+  const membro = await buscarMembroDaEmpresa(
+    empresaId,
+    usuarioId,
+  );
 
   if (!membro) {
-    throw new Error("EMPRESA_NAO_ENCONTRADA");
+    throw new RecursoNaoEncontradoError(
+      "Empresa",
+      "Empresa não encontrada",
+    );
   }
 
   if (membro.cargo !== "ADMIN") {
-    throw new Error("SEM_PERMISSAO");
+    throw new SemPermissaoError();
   }
+
+  return membro;
+}
+
+function tratarDuplicidade(erro: unknown): never {
+  if (
+    erro instanceof Prisma.PrismaClientKnownRequestError &&
+    erro.code === "P2002"
+  ) {
+    throw new RecursoDuplicadoError(
+      "Você já possui uma empresa com esse nome",
+    );
+  }
+
+  throw erro;
 }
 
 export async function criarEmpresa(dados: DadosNovaEmpresa) {
   const nome = dados.nome.trim();
 
-  if (!nome) {
-    throw new Error("NOME_EMPRESA_INVALIDO");
+  try {
+    return await criarEmpresaComAdministrador({
+      nome,
+      nomeNormalizado: normalizarNome(nome),
+      usuarioId: dados.usuarioId,
+    });
+  } catch (erro) {
+    tratarDuplicidade(erro);
   }
-
-  return criarEmpresaComAdministrador({
-    nome,
-    nomeNormalizado: normalizarNome(nome),
-    usuarioId: dados.usuarioId,
-  });
 }
 
 export async function buscarEmpresasDoUsuario(usuarioId: string) {
@@ -60,33 +83,42 @@ export async function buscarEmpresaDoUsuario(
   empresaId: string,
   usuarioId: string,
 ) {
-  const empresa = await buscarEmpresaPorId(empresaId, usuarioId);
+  const empresa = await buscarEmpresaPorId(
+    empresaId,
+    usuarioId,
+  );
 
   if (!empresa) {
-    throw new Error("EMPRESA_NAO_ENCONTRADA");
+    throw new RecursoNaoEncontradoError(
+      "Empresa",
+      "Empresa não encontrada",
+    );
   }
 
   return empresa;
 }
 
 export async function editarEmpresa(dados: DadosAtualizacaoEmpresa) {
-  await verificarAdministrador(dados.empresaId, dados.usuarioId);
+  await exigirAdministrador(dados.empresaId, dados.usuarioId);
 
   const nome = dados.nome.trim();
 
-  if (!nome) {
-    throw new Error("NOME_EMPRESA_INVALIDO");
+  try {
+    return await atualizarEmpresa({
+      empresaId: dados.empresaId,
+      nome,
+      nomeNormalizado: normalizarNome(nome),
+    });
+  } catch (erro) {
+    tratarDuplicidade(erro);
   }
-
-  return atualizarEmpresa({
-    empresaId: dados.empresaId,
-    nome,
-    nomeNormalizado: normalizarNome(nome),
-  });
 }
 
-export async function removerEmpresa(empresaId: string, usuarioId: string) {
-  await verificarAdministrador(empresaId, usuarioId);
+export async function removerEmpresa(
+  empresaId: string,
+  usuarioId: string,
+) {
+  await exigirAdministrador(empresaId, usuarioId);
 
-  return excluirEmpresa(empresaId);
+  await excluirEmpresa(empresaId);
 }

@@ -1,6 +1,11 @@
 import type { FastifyInstance } from "fastify";
-import { cadastroController, loginController } from "./auth.controller.js";
+
+import { obterUsuarioId } from "../../helpers/obter-usuario-id.js";
 import { verificarAutenticacao } from "../../middlewares/autenticacao.js";
+import {
+  cadastroController,
+  loginController,
+} from "./auth.controller.js";
 
 export async function authRoutes(app: FastifyInstance) {
   app.post("/cadastro", cadastroController);
@@ -13,7 +18,7 @@ export async function authRoutes(app: FastifyInstance) {
     },
     async (request) => {
       return {
-        usuarioId: request.user.sub,
+        usuarioId: obterUsuarioId(request),
         email: request.user.email,
       };
     },

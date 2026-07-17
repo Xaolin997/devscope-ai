@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+
 import type { FastifyInstance } from "fastify";
 
 import { createApp } from "../../src/app.js";
@@ -18,35 +19,36 @@ describe("GET /auth/perfil", () => {
   it("deve rejeitar uma requisição sem token", async () => {
     const resposta = await app.inject({
       method: "GET",
-      url: "/auth/perfil"
+      url: "/auth/perfil",
     });
 
     expect(resposta.statusCode).toBe(401);
 
-    expect(resposta.json()).toEqual({
-      erro: "Token inválido ou não informado"
+    expect(resposta.json()).toMatchObject({
+      erro: "Token inválido ou não informado",
+      codigo: "TOKEN_INVALIDO",
     });
   });
 
   it("deve aceitar um token válido", async () => {
     const token = app.jwt.sign({
       sub: "usuario-teste-id",
-      email: "teste@devscope.com"
+      email: "teste@devscope.com",
     });
 
     const resposta = await app.inject({
       method: "GET",
       url: "/auth/perfil",
       headers: {
-        authorization: `Bearer ${token}`
-      }
+        authorization: `Bearer ${token}`,
+      },
     });
 
     expect(resposta.statusCode).toBe(200);
 
     expect(resposta.json()).toEqual({
       usuarioId: "usuario-teste-id",
-      email: "teste@devscope.com"
+      email: "teste@devscope.com",
     });
   });
 });

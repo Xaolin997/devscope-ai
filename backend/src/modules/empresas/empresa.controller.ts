@@ -1,5 +1,7 @@
 import type { FastifyReply, FastifyRequest } from "fastify";
-import { z } from "zod";
+
+import { DadosInvalidosError } from "../../errors/domain-errors.js";
+import { obterUsuarioId } from "../../helpers/obter-usuario-id.js";
 import {
   buscarEmpresaDoUsuario,
   buscarEmpresasDoUsuario,
@@ -7,112 +9,63 @@ import {
   editarEmpresa,
   removerEmpresa,
 } from "./empresa.service.js";
-
-import { Prisma } from "../../generated/prisma/client.js";
-
-const empresaParamsSchema = z.object({
-  id: z.string().uuid("ID da empresa inválido"),
-});
-
-const empresaSchema = z.object({
-  nome: z
-    .string()
-    .trim()
-    .min(2, "O nome deve ter pelo menos 2 caracteres")
-    .max(100, "O nome deve ter no máximo 100 caracteres"),
-});
-
-function erroDeDuplicidade(erro: unknown) {
-  return (
-    erro instanceof Prisma.PrismaClientKnownRequestError &&
-    erro.code === "P2002"
-  );
-}
+import {
+  atualizarEmpresaSchema,
+  criarEmpresaSchema,
+  empresaParamsSchema,
+} from "./empresa.schema.js";
 
 export async function criarEmpresaController(
   request: FastifyRequest,
   reply: FastifyReply,
 ) {
-  const validacao = empresaSchema.safeParse(request.body);
+  const corpo = criarEmpresaSchema.safeParse(request.body);
 
-  if (!validacao.success) {
-    return reply.status(400).send({
-      erro: "Dados inválidos",
-      detalhes: validacao.error.flatten(),
-    });
+  if (!corpo.success) {
+    throw new DadosInvalidosError(
+      "Dados inválidos",
+      corpo.error.flatten(),
+    );
   }
 
-  try {
-    const empresa = await criarEmpresa({
-      nome: validacao.data.nome,
-      usuarioId: request.user.sub,
-    });
+  const empresa = await criarEmpresa({
+    nome: corpo.data.nome,
+    usuarioId: obterUsuarioId(request),
+  });
 
-    return reply.status(201).send(empresa);
-  } catch (erro) {
-    if (erroDeDuplicidade(erro)) {
-      return reply.status(409).send({
-        erro: "Você já possui uma empresa com esse nome",
-      });
-    }
-
-    request.log.error(erro);
-
-    return reply.status(500).send({
-      erro: "Não foi possível criar a empresa",
-    });
-  }
+  return reply.status(201).send(empresa);
 }
 
 export async function listarEmpresasController(
   request: FastifyRequest,
   reply: FastifyReply,
 ) {
-  try {
-    const empresas = await buscarEmpresasDoUsuario(request.user.sub);
+  const empresas = await buscarEmpresasDoUsuario(
+    obterUsuarioId(request),
+  );
 
-    return reply.send(empresas);
-  } catch (erro) {
-    request.log.error(erro);
-
-    return reply.status(500).send({
-      erro: "Não foi possível listar as empresas",
-    });
-  }
+  return reply.send(empresas);
 }
 
 export async function buscarEmpresaController(
   request: FastifyRequest,
   reply: FastifyReply,
 ) {
-  const validacao = empresaParamsSchema.safeParse(request.params);
+  const params = empresaParamsSchema.safeParse(request.params);
 
-  if (!validacao.success) {
-    return reply.status(400).send({
-      erro: "ID da empresa inválido",
-    });
-  }
-
-  try {
-    const empresa = await buscarEmpresaDoUsuario(
-      validacao.data.id,
-      request.user.sub,
+  if (!params.success) {
+    throw new DadosInvalidosError(
+      "ID da empresa inválido",
+      params.error.flatten(),
     );
-
-    return reply.send(empresa);
-  } catch (erro) {
-    if (erro instanceof Error && erro.message === "EMPRESA_NAO_ENCONTRADA") {
-      return reply.status(404).send({
-        erro: "Empresa não encontrada",
-      });
-    }
-
-    request.log.error(erro);
-
-    return reply.status(500).send({
-      erro: "Não foi possível buscar a empresa",
-    });
   }
+
+  const empresa = await buscarEmpresaDoUsuario(
+    params.data.id,
+    obterUsuarioId(request),
+  );
+
+  return reply.send(empresa);
 }
 
 export async function atualizarEmpresaController(
@@ -120,90 +73,48 @@ export async function atualizarEmpresaController(
   reply: FastifyReply,
 ) {
   const params = empresaParamsSchema.safeParse(request.params);
-
-  const corpo = empresaSchema.safeParse(request.body);
+  const corpo = atualizarEmpresaSchema.safeParse(request.body);
 
   if (!params.success) {
-    return reply.status(400).send({
-      erro: "ID da empresa inválido",
-    });
+    throw new DadosInvalidosError(
+      "ID da empresa inválido",
+      params.error.flatten(),
+    );
   }
 
   if (!corpo.success) {
-    return reply.status(400).send({
-      erro: "Dados inválidos",
-      detalhes: corpo.error.flatten(),
-    });
+    throw new DadosInvalidosError(
+      "Dados inválidos",
+      corpo.error.flatten(),
+    );
   }
 
-  try {
-    const empresa = await editarEmpresa({
-      empresaId: params.data.id,
-      usuarioId: request.user.sub,
-      nome: corpo.data.nome,
-    });
+  const empresa = await editarEmpresa({
+    empresaId: params.data.id,
+    usuarioId: obterUsuarioId(request),
+    nome: corpo.data.nome,
+  });
 
-    return reply.send(empresa);
-  } catch (erro) {
-    if (erro instanceof Error && erro.message === "EMPRESA_NAO_ENCONTRADA") {
-      return reply.status(404).send({
-        erro: "Empresa não encontrada",
-      });
-    }
-
-    if (erro instanceof Error && erro.message === "SEM_PERMISSAO") {
-      return reply.status(403).send({
-        erro: "Você não possui permissão para editar esta empresa",
-      });
-    }
-
-    if (erroDeDuplicidade(erro)) {
-      return reply.status(409).send({
-        erro: "Você já possui uma empresa com esse nome",
-      });
-    }
-
-    request.log.error(erro);
-
-    return reply.status(500).send({
-      erro: "Não foi possível atualizar a empresa",
-    });
-  }
+  return reply.send(empresa);
 }
 
 export async function excluirEmpresaController(
   request: FastifyRequest,
   reply: FastifyReply,
 ) {
-  const validacao = empresaParamsSchema.safeParse(request.params);
+  const params = empresaParamsSchema.safeParse(request.params);
 
-  if (!validacao.success) {
-    return reply.status(400).send({
-      erro: "ID da empresa inválido",
-    });
+  if (!params.success) {
+    throw new DadosInvalidosError(
+      "ID da empresa inválido",
+      params.error.flatten(),
+    );
   }
 
-  try {
-    await removerEmpresa(validacao.data.id, request.user.sub);
+  await removerEmpresa(
+    params.data.id,
+    obterUsuarioId(request),
+  );
 
-    return reply.status(204).send();
-  } catch (erro) {
-    if (erro instanceof Error && erro.message === "EMPRESA_NAO_ENCONTRADA") {
-      return reply.status(404).send({
-        erro: "Empresa não encontrada",
-      });
-    }
-
-    if (erro instanceof Error && erro.message === "SEM_PERMISSAO") {
-      return reply.status(403).send({
-        erro: "Você não possui permissão para excluir esta empresa",
-      });
-    }
-
-    request.log.error(erro);
-
-    return reply.status(500).send({
-      erro: "Não foi possível excluir a empresa",
-    });
-  }
+  return reply.status(204).send();
 }

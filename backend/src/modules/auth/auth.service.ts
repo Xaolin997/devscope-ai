@@ -1,44 +1,65 @@
 import bcrypt from "bcrypt";
-import { buscarUsuarioPorEmail, criarUsuario } from "./usuario.repository.js";
 
-type DadosCadastro = {
-  nome: string;
-  email: string;
-  senha: string;
-};
-
-type DadosLogin = {
-  email: string;
-  senha: string;
-};
+import { Prisma } from "../../generated/prisma/client.js";
+import {
+  CredenciaisInvalidasError,
+  RecursoDuplicadoError,
+} from "../../errors/domain-errors.js";
+import type { DadosCadastro, DadosLogin } from "./auth.schema.js";
+import {
+  buscarUsuarioPorEmail,
+  criarUsuario,
+} from "./usuario.repository.js";
 
 export async function cadastrarUsuario(dados: DadosCadastro) {
-  const usuarioExistente = await buscarUsuarioPorEmail(dados.email);
+  const nome = dados.nome.trim();
+  const email = dados.email.trim().toLowerCase();
+
+  const usuarioExistente = await buscarUsuarioPorEmail(email);
 
   if (usuarioExistente) {
-    throw new Error("EMAIL_JA_CADASTRADO");
+    throw new RecursoDuplicadoError(
+      "Este e-mail já está cadastrado",
+    );
   }
 
   const senhaHash = await bcrypt.hash(dados.senha, 10);
 
-  return criarUsuario({
-    nome: dados.nome,
-    email: dados.email,
-    senhaHash,
-  });
+  try {
+    return await criarUsuario({
+      nome,
+      email,
+      senhaHash,
+    });
+  } catch (erro) {
+    if (
+      erro instanceof Prisma.PrismaClientKnownRequestError &&
+      erro.code === "P2002"
+    ) {
+      throw new RecursoDuplicadoError(
+        "Este e-mail já está cadastrado",
+      );
+    }
+
+    throw erro;
+  }
 }
 
 export async function autenticarUsuario(dados: DadosLogin) {
-  const usuario = await buscarUsuarioPorEmail(dados.email);
+  const email = dados.email.trim().toLowerCase();
+  const usuario = await buscarUsuarioPorEmail(email);
 
   if (!usuario) {
-    throw new Error("CREDENCIAIS_INVALIDAS");
+    throw new CredenciaisInvalidasError();
   }
 
-  const senhaCorreta = await bcrypt.compare(dados.senha, usuario.senhaHash);
+  const senhaCorreta = await bcrypt.compare(
+    dados.senha,
+    usuario.senhaHash,
+  );
 
   if (!senhaCorreta) {
-    throw new Error("CREDENCIAIS_INVALIDAS");
+    throw new CredenciaisInvalidasError();
   }
 
   return {

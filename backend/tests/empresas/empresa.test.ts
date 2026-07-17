@@ -1,5 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+
 import type { FastifyInstance } from "fastify";
+
 import { createApp } from "../../src/app.js";
 import { prisma } from "../../src/config/prisma.js";
 import { limparBanco } from "../helpers/limpar-banco.js";
@@ -96,8 +98,9 @@ describe("CRUD de empresas", () => {
 
     expect(resposta.statusCode).toBe(401);
 
-    expect(resposta.json()).toEqual({
+    expect(resposta.json()).toMatchObject({
       erro: "Token inválido ou não informado",
+      codigo: "TOKEN_INVALIDO",
     });
   });
 
@@ -168,8 +171,9 @@ describe("CRUD de empresas", () => {
 
     expect(duplicada.statusCode).toBe(409);
 
-    expect(duplicada.json()).toEqual({
+    expect(duplicada.json()).toMatchObject({
       erro: "Você já possui uma empresa com esse nome",
+      codigo: "RECURSO_DUPLICADO",
     });
   });
 
@@ -231,8 +235,9 @@ describe("CRUD de empresas", () => {
 
     expect(resposta.statusCode).toBe(404);
 
-    expect(resposta.json()).toEqual({
+    expect(resposta.json()).toMatchObject({
       erro: "Empresa não encontrada",
+      codigo: "RECURSO_NAO_ENCONTRADO",
     });
   });
 

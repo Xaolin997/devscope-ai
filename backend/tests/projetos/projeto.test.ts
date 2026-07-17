@@ -132,7 +132,8 @@ describe("CRUD de projetos", () => {
 
     expect(resposta.statusCode).toBe(401);
 
-    expect(resposta.json()).toEqual({
+    expect(resposta.json()).toMatchObject({
+      codigo: "TOKEN_INVALIDO",
       erro: "Token inválido ou não informado",
     });
   });

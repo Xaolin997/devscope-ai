@@ -1,11 +1,4 @@
-import {
-  afterAll,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it
-} from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import type { FastifyInstance } from "fastify";
 
@@ -38,8 +31,8 @@ describe("POST /auth/cadastro", () => {
       payload: {
         nome: "Usuário Teste",
         email: "teste@devscope.com",
-        senha: "12345678"
-      }
+        senha: "12345678",
+      },
     });
 
     expect(resposta.statusCode).toBe(201);
@@ -48,7 +41,7 @@ describe("POST /auth/cadastro", () => {
 
     expect(corpo).toMatchObject({
       nome: "Usuário Teste",
-      email: "teste@devscope.com"
+      email: "teste@devscope.com",
     });
 
     expect(corpo).not.toHaveProperty("senha");
@@ -56,8 +49,8 @@ describe("POST /auth/cadastro", () => {
 
     const usuarioSalvo = await prisma.usuario.findUnique({
       where: {
-        email: "teste@devscope.com"
-      }
+        email: "teste@devscope.com",
+      },
     });
 
     expect(usuarioSalvo).not.toBeNull();
@@ -68,25 +61,26 @@ describe("POST /auth/cadastro", () => {
     const dados = {
       nome: "Usuário Teste",
       email: "duplicado@devscope.com",
-      senha: "12345678"
+      senha: "12345678",
     };
 
     await app.inject({
       method: "POST",
       url: "/auth/cadastro",
-      payload: dados
+      payload: dados,
     });
 
     const resposta = await app.inject({
       method: "POST",
       url: "/auth/cadastro",
-      payload: dados
+      payload: dados,
     });
 
     expect(resposta.statusCode).toBe(409);
 
-    expect(resposta.json()).toEqual({
-      erro: "Este e-mail já está cadastrado"
+    expect(resposta.json()).toMatchObject({
+      erro: "Este e-mail já está cadastrado",
+      codigo: "RECURSO_DUPLICADO",
     });
   });
 });
