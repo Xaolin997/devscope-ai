@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { createApp } from "./app.js";
 
-const app = createApp();
+const app = await createApp();
 const port = Number(process.env.PORT) || 3333;
 
 try {

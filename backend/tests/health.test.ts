@@ -7,7 +7,7 @@ describe("GET /health", () => {
   let app: FastifyInstance;
 
   beforeAll(async () => {
-    app = createApp();
+    app = await createApp();
     await app.ready();
   });
 

@@ -1,11 +1,15 @@
-import type { FastifyRequest } from "fastify";
+import type { FastifyReply, FastifyRequest } from "fastify";
 
-import { TokenInvalidoError } from "../errors/domain-errors.js";
-
-export async function verificarAutenticacao(request: FastifyRequest) {
+export async function verificarAutenticacao(
+  request: FastifyRequest,
+  reply: FastifyReply,
+) {
   try {
     await request.jwtVerify();
   } catch {
-    throw new TokenInvalidoError();
+    return reply.status(401).send({
+      erro: "Token inválido ou não informado",
+      codigo: "TOKEN_INVALIDO",
+    });
   }
 }

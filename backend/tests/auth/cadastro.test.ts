@@ -10,7 +10,7 @@ describe("POST /auth/cadastro", () => {
   let app: FastifyInstance;
 
   beforeAll(async () => {
-    app = createApp();
+    app = await createApp();
     await app.ready();
   });
 

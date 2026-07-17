@@ -1,25 +1,40 @@
 import type { FastifyInstance } from "fastify";
+
 import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
 
-export async function configurarSwagger(app: FastifyInstance) {
+export async function configurarSwagger(app: FastifyInstance): Promise<void> {
   await app.register(swagger, {
     openapi: {
+      openapi: "3.0.3",
+
       info: {
         title: "DevScope AI API",
-        description:
-          "API REST para gerenciamento de empresas, projetos, sprints e tarefas.",
+        description: "Documentação da API do DevScope AI",
         version: "1.0.0",
       },
 
-      servers: [
+      components: {
+        securitySchemes: {
+          bearerAuth: {
+            type: "http",
+            scheme: "bearer",
+            bearerFormat: "JWT",
+          },
+        },
+      },
+
+      security: [
         {
-          url: "http://localhost:3333",
-          description: "Servidor de desenvolvimento",
+          bearerAuth: [],
         },
       ],
 
       tags: [
+        {
+          name: "Health",
+          description: "Verificação do estado da API",
+        },
         {
           name: "Autenticação",
           description: "Cadastro, login e perfil do usuário",
@@ -33,16 +48,6 @@ export async function configurarSwagger(app: FastifyInstance) {
           description: "Gerenciamento de projetos",
         },
       ],
-
-      components: {
-        securitySchemes: {
-          bearerAuth: {
-            type: "http",
-            scheme: "bearer",
-            bearerFormat: "JWT",
-          },
-        },
-      },
     },
   });
 
