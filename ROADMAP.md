@@ -3,7 +3,7 @@
 ## Backend
 - [x] Autenticação
 - [x] Empresas
-- [ ] Projetos
+- [x] Projetos
 - [ ] Sprints
 - [ ] Tarefas
 - [ ] Comentários
