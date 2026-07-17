@@ -196,8 +196,9 @@ describe("CRUD de projetos", () => {
 
     expect(duplicado.statusCode).toBe(409);
 
-    expect(duplicado.json()).toEqual({
+    expect(duplicado.json()).toMatchObject({
       erro: "Já existe um projeto com esse nome nesta empresa",
+      codigo: "RECURSO_DUPLICADO",
     });
   });
 
@@ -235,8 +236,9 @@ describe("CRUD de projetos", () => {
 
     expect(resposta.statusCode).toBe(400);
 
-    expect(resposta.json()).toEqual({
+    expect(resposta.json()).toMatchObject({
       erro: "A data limite não pode ser anterior à data de início",
+      codigo: "DADOS_INVALIDOS",
     });
   });
 
@@ -302,8 +304,9 @@ describe("CRUD de projetos", () => {
 
     expect(resposta.statusCode).toBe(404);
 
-    expect(resposta.json()).toEqual({
+    expect(resposta.json()).toMatchObject({
       erro: "Projeto não encontrado",
+      codigo: "RECURSO_NAO_ENCONTRADO",
     });
   });
 
@@ -388,8 +391,9 @@ describe("CRUD de projetos", () => {
 
     expect(resposta.statusCode).toBe(404);
 
-    expect(resposta.json()).toEqual({
+    expect(resposta.json()).toMatchObject({
       erro: "Empresa não encontrada",
+      codigo: "RECURSO_NAO_ENCONTRADO",
     });
   });
 
@@ -421,8 +425,9 @@ describe("CRUD de projetos", () => {
 
     expect(resposta.statusCode).toBe(403);
 
-    expect(resposta.json()).toEqual({
+    expect(resposta.json()).toMatchObject({
       erro: "Você não possui permissão para realizar esta operação",
+      codigo: "SEM_PERMISSAO",
     });
   });
 

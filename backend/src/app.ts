@@ -2,7 +2,7 @@ import Fastify from "fastify";
 import cors from "@fastify/cors";
 import jwt from "@fastify/jwt";
 import rateLimit from "@fastify/rate-limit";
-
+import { configurarErrorHandler } from "./plugins/error-handler.js";
 import { authRoutes } from "./modules/auth/auth.routes.js";
 import { empresaRoutes } from "./modules/empresas/empresa.routes.js";
 import { projetoRoutes } from "./modules/projetos/projeto.routes.js";
@@ -24,6 +24,8 @@ export function createApp() {
   app.register(jwt, {
     secret: process.env.JWT_SECRET ?? "segredo-de-teste",
   });
+
+  configurarErrorHandler(app);
 
   app.register(authRoutes, {
     prefix: "/auth",

@@ -22,19 +22,19 @@ type DadosAtualizacaoProjeto = {
 
 export async function buscarVinculoEmpresa(
   empresaId: string,
-  usuarioId: string
+  usuarioId: string,
 ) {
   return prisma.membroEmpresa.findUnique({
     where: {
       usuarioId_empresaId: {
         usuarioId,
-        empresaId
-      }
+        empresaId,
+      },
     },
     select: {
       id: true,
-      cargo: true
-    }
+      cargo: true,
+    },
   });
 }
 
@@ -47,7 +47,7 @@ export async function criarProjeto(dados: DadosCriacaoProjeto) {
       descricao: dados.descricao,
       status: dados.status,
       dataInicio: dados.dataInicio,
-      dataLimite: dados.dataLimite
+      dataLimite: dados.dataLimite,
     },
     select: {
       id: true,
@@ -58,15 +58,15 @@ export async function criarProjeto(dados: DadosCriacaoProjeto) {
       dataLimite: true,
       empresaId: true,
       criadoEm: true,
-      atualizadoEm: true
-    }
+      atualizadoEm: true,
+    },
   });
 }
 
 export async function listarProjetosDaEmpresa(empresaId: string) {
   return prisma.projeto.findMany({
     where: {
-      empresaId
+      empresaId,
     },
     select: {
       id: true,
@@ -76,22 +76,19 @@ export async function listarProjetosDaEmpresa(empresaId: string) {
       dataInicio: true,
       dataLimite: true,
       criadoEm: true,
-      atualizadoEm: true
+      atualizadoEm: true,
     },
     orderBy: {
-      criadoEm: "desc"
-    }
+      criadoEm: "desc",
+    },
   });
 }
 
-export async function buscarProjetoPorId(
-  empresaId: string,
-  projetoId: string
-) {
+export async function buscarProjetoPorId(empresaId: string, projetoId: string) {
   return prisma.projeto.findFirst({
     where: {
       id: projetoId,
-      empresaId
+      empresaId,
     },
     select: {
       id: true,
@@ -106,17 +103,17 @@ export async function buscarProjetoPorId(
       empresa: {
         select: {
           id: true,
-          nome: true
-        }
-      }
-    }
+          nome: true,
+        },
+      },
+    },
   });
 }
 
 export async function atualizarProjeto(dados: DadosAtualizacaoProjeto) {
   return prisma.projeto.update({
     where: {
-      id: dados.projetoId
+      id: dados.projetoId,
     },
     data: {
       nome: dados.nome,
@@ -124,7 +121,7 @@ export async function atualizarProjeto(dados: DadosAtualizacaoProjeto) {
       descricao: dados.descricao,
       status: dados.status,
       dataInicio: dados.dataInicio,
-      dataLimite: dados.dataLimite
+      dataLimite: dados.dataLimite,
     },
     select: {
       id: true,
@@ -135,19 +132,19 @@ export async function atualizarProjeto(dados: DadosAtualizacaoProjeto) {
       dataLimite: true,
       empresaId: true,
       criadoEm: true,
-      atualizadoEm: true
-    }
+      atualizadoEm: true,
+    },
   });
 }
 
 export async function excluirProjeto(projetoId: string) {
   return prisma.projeto.delete({
     where: {
-      id: projetoId
+      id: projetoId,
     },
     select: {
       id: true,
-      nome: true
-    }
+      nome: true,
+    },
   });
 }

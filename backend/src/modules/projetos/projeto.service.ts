@@ -1,19 +1,24 @@
+import { Prisma } from "../../generated/prisma/client.js";
+
+import {
+  DadosInvalidosError,
+  RecursoDuplicadoError,
+  RecursoNaoEncontradoError,
+  SemPermissaoError,
+} from "../../errors/domain-errors.js";
+
 import {
   atualizarProjeto,
   buscarProjetoPorId,
   buscarVinculoEmpresa,
   criarProjeto,
   excluirProjeto,
-  listarProjetosDaEmpresa
+  listarProjetosDaEmpresa,
 } from "./projeto.repository.js";
 
-type StatusProjeto =
-  | "ATIVO"
-  | "PAUSADO"
-  | "CONCLUIDO"
-  | "CANCELADO";
+type StatusProjeto = "ATIVO" | "PAUSADO" | "CONCLUIDO" | "CANCELADO";
 
-type DadosNovoProjeto = {
+type CadastrarProjetoInput = {
   usuarioId: string;
   empresaId: string;
   nome: string;
@@ -23,7 +28,7 @@ type DadosNovoProjeto = {
   dataLimite?: string;
 };
 
-type DadosEdicaoProjeto = {
+type EditarProjetoInput = {
   usuarioId: string;
   empresaId: string;
   projetoId: string;
@@ -37,19 +42,58 @@ type DadosEdicaoProjeto = {
 function normalizarNome(nome: string) {
   return nome
     .trim()
-    .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
 }
 
-async function verificarMembro(
-  empresaId: string,
-  usuarioId: string
-) {
+function converterDataCriacao(data: string | undefined): Date | undefined {
+  if (data === undefined) {
+    return undefined;
+  }
+
+  const dataConvertida = new Date(data);
+
+  if (Number.isNaN(dataConvertida.getTime())) {
+    throw new DadosInvalidosError("Data inválida");
+  }
+
+  return dataConvertida;
+}
+
+function converterDataAtualizacao(
+  data: string | null | undefined,
+): Date | null | undefined {
+  if (data === undefined) {
+    return undefined;
+  }
+
+  if (data === null) {
+    return null;
+  }
+
+  const dataConvertida = new Date(data);
+
+  if (Number.isNaN(dataConvertida.getTime())) {
+    throw new DadosInvalidosError("Data inválida");
+  }
+
+  return dataConvertida;
+}
+
+function validarPeriodo(dataInicio?: Date | null, dataLimite?: Date | null) {
+  if (dataInicio && dataLimite && dataLimite.getTime() < dataInicio.getTime()) {
+    throw new DadosInvalidosError(
+      "A data limite não pode ser anterior à data de início",
+    );
+  }
+}
+
+async function verificarMembro(empresaId: string, usuarioId: string) {
   const membro = await buscarVinculoEmpresa(empresaId, usuarioId);
 
   if (!membro) {
-    throw new Error("EMPRESA_NAO_ENCONTRADA");
+    throw new RecursoNaoEncontradoError("Empresa", "Empresa não encontrada");
   }
 
   return membro;
@@ -57,74 +101,57 @@ async function verificarMembro(
 
 async function verificarPermissaoDeGerenciamento(
   empresaId: string,
-  usuarioId: string
+  usuarioId: string,
 ) {
   const membro = await verificarMembro(empresaId, usuarioId);
 
-  if (!["ADMIN", "GERENTE"].includes(membro.cargo)) {
-    throw new Error("SEM_PERMISSAO");
+  if (membro.cargo !== "ADMIN") {
+    throw new SemPermissaoError();
   }
 
   return membro;
 }
 
-function converterData(data?: string | null) {
-  if (data === null) {
-    return null;
-  }
-
-  if (!data) {
-    return undefined;
-  }
-
-  return new Date(data);
-}
-
-function validarPeriodo(
-  dataInicio?: Date | null,
-  dataLimite?: Date | null
-) {
+function tratarErroDeDuplicidade(erro: unknown): never {
   if (
-    dataInicio instanceof Date &&
-    dataLimite instanceof Date &&
-    dataLimite < dataInicio
+    erro instanceof Prisma.PrismaClientKnownRequestError &&
+    erro.code === "P2002"
   ) {
-    throw new Error("PERIODO_INVALIDO");
+    throw new RecursoDuplicadoError(
+      "Já existe um projeto com esse nome nesta empresa",
+    );
   }
+
+  throw erro;
 }
 
-export async function cadastrarProjeto(dados: DadosNovoProjeto) {
-  await verificarPermissaoDeGerenciamento(
-    dados.empresaId,
-    dados.usuarioId
-  );
+export async function cadastrarProjeto(dados: CadastrarProjetoInput) {
+  await verificarPermissaoDeGerenciamento(dados.empresaId, dados.usuarioId);
 
   const nome = dados.nome.trim();
 
-  if (!nome) {
-    throw new Error("NOME_PROJETO_INVALIDO");
-  }
+  const dataInicio = converterDataCriacao(dados.dataInicio);
 
-  const dataInicio = converterData(dados.dataInicio);
-  const dataLimite = converterData(dados.dataLimite);
+  const dataLimite = converterDataCriacao(dados.dataLimite);
 
   validarPeriodo(dataInicio, dataLimite);
 
-  return criarProjeto({
-    empresaId: dados.empresaId,
-    nome,
-    nomeNormalizado: normalizarNome(nome),
-    descricao: dados.descricao?.trim() || undefined,
-    status: dados.status,
-    dataInicio: dataInicio ?? undefined,
-    dataLimite: dataLimite ?? undefined
-  });
+  try {
+    return await criarProjeto({
+      empresaId: dados.empresaId,
+      nome,
+      nomeNormalizado: normalizarNome(nome),
+      descricao: dados.descricao?.trim(),
+      status: dados.status ?? "ATIVO",
+      dataInicio,
+      dataLimite,
+    });
+  } catch (erro) {
+    tratarErroDeDuplicidade(erro);
+  }
 }
 
-export async function buscarProjetos(
-  empresaId: string,
-  usuarioId: string
-) {
+export async function buscarProjetos(empresaId: string, usuarioId: string) {
   await verificarMembro(empresaId, usuarioId);
 
   return listarProjetosDaEmpresa(empresaId);
@@ -133,96 +160,75 @@ export async function buscarProjetos(
 export async function buscarProjeto(
   empresaId: string,
   projetoId: string,
-  usuarioId: string
+  usuarioId: string,
 ) {
   await verificarMembro(empresaId, usuarioId);
 
   const projeto = await buscarProjetoPorId(empresaId, projetoId);
 
   if (!projeto) {
-    throw new Error("PROJETO_NAO_ENCONTRADO");
+    throw new RecursoNaoEncontradoError("Projeto");
   }
 
   return projeto;
 }
 
-export async function editarProjeto(dados: DadosEdicaoProjeto) {
-  await verificarPermissaoDeGerenciamento(
-    dados.empresaId,
-    dados.usuarioId
-  );
+export async function editarProjeto(dados: EditarProjetoInput) {
+  await verificarPermissaoDeGerenciamento(dados.empresaId, dados.usuarioId);
 
   const projetoExistente = await buscarProjetoPorId(
     dados.empresaId,
-    dados.projetoId
+    dados.projetoId,
   );
 
   if (!projetoExistente) {
-    throw new Error("PROJETO_NAO_ENCONTRADO");
+    throw new RecursoNaoEncontradoError("Projeto");
   }
 
-  const nome =
-    dados.nome !== undefined
-      ? dados.nome.trim()
-      : undefined;
+  const nome = dados.nome !== undefined ? dados.nome.trim() : undefined;
 
-  if (nome !== undefined && !nome) {
-    throw new Error("NOME_PROJETO_INVALIDO");
+  const novaDataInicio = converterDataAtualizacao(dados.dataInicio);
+
+  const novaDataLimite = converterDataAtualizacao(dados.dataLimite);
+
+  const dataInicioFinal =
+    novaDataInicio === undefined ? projetoExistente.dataInicio : novaDataInicio;
+
+  const dataLimiteFinal =
+    novaDataLimite === undefined ? projetoExistente.dataLimite : novaDataLimite;
+
+  validarPeriodo(dataInicioFinal, dataLimiteFinal);
+
+  try {
+    return await atualizarProjeto({
+      projetoId: dados.projetoId,
+      nome,
+      nomeNormalizado: nome !== undefined ? normalizarNome(nome) : undefined,
+      descricao:
+        dados.descricao === undefined
+          ? undefined
+          : (dados.descricao?.trim() ?? null),
+      status: dados.status,
+      dataInicio: novaDataInicio,
+      dataLimite: novaDataLimite,
+    });
+  } catch (erro) {
+    tratarErroDeDuplicidade(erro);
   }
-
-  const dataInicio =
-    dados.dataInicio !== undefined
-      ? converterData(dados.dataInicio)
-      : undefined;
-
-  const dataLimite =
-    dados.dataLimite !== undefined
-      ? converterData(dados.dataLimite)
-      : undefined;
-
-  const inicioFinal =
-    dataInicio === undefined
-      ? projetoExistente.dataInicio
-      : dataInicio;
-
-  const limiteFinal =
-    dataLimite === undefined
-      ? projetoExistente.dataLimite
-      : dataLimite;
-
-  validarPeriodo(inicioFinal, limiteFinal);
-
-  return atualizarProjeto({
-    projetoId: dados.projetoId,
-    nome,
-    nomeNormalizado: nome
-      ? normalizarNome(nome)
-      : undefined,
-    descricao: dados.descricao,
-    status: dados.status,
-    dataInicio,
-    dataLimite
-  });
 }
 
 export async function removerProjeto(
   empresaId: string,
   projetoId: string,
-  usuarioId: string
+  usuarioId: string,
 ) {
-  await verificarPermissaoDeGerenciamento(
-    empresaId,
-    usuarioId
-  );
+  await verificarPermissaoDeGerenciamento(empresaId, usuarioId);
 
-  const projeto = await buscarProjetoPorId(
-    empresaId,
-    projetoId
-  );
+  const projeto = await buscarProjetoPorId(empresaId, projetoId);
 
   if (!projeto) {
-    throw new Error("PROJETO_NAO_ENCONTRADO");
+    throw new RecursoNaoEncontradoError("Projeto");
   }
 
-  return excluirProjeto(projetoId);
+  await excluirProjeto(projetoId);
 }
